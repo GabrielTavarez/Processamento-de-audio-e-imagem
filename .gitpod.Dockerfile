@@ -9,8 +9,6 @@ RUN sudo apt-get update \
         build-essential \
         libatomic1 \
         python \
-        gfortran \
-        perl \
         wget \
         m4 \
         cmake \
