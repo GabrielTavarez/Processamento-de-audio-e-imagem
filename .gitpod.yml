@@ -1,8 +1,8 @@
 # List the start up tasks. Learn more https://www.gitpod.io/docs/config-start-tasks/
 tasks:
   - name: term 01
-    init: echo 'init script' # runs during prebuild
-    command: echo 'start script'
+    init: curl -fsSL https://install.julialang.org | sh # runs during prebuild
+    command: echo 'Hello Gabriel. Welcome to hell'
 
 # List the ports to expose. Learn more https://www.gitpod.io/docs/config-ports/
 ports:
