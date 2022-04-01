@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.16.1
+# v0.14.9
 
 using Markdown
 using InteractiveUtils
@@ -70,6 +70,18 @@ md" ## 2) Filtragem do sinal "
 md" ## 3) Calculando espectros e respostas do filtro
 
 Nesta secção iremos comparar o ganho do filtro do sinal em coparação com a resposta em frequência, e a razão entre as TDFs dos sinais de entrada e saída
+
+"
+
+# ╔═╡ 4f3e7be3-807e-4856-a2a8-53a80b9abd7c
+md"
+
+Tabela de ganhos calculados pela razão entre a fft na entrada e saída do sinal; e ganho da resposta em frequência do sinal.
+
+Frequência (kHz) | Ganho Teórico ($H(e^{j\omega})$) | Ganho Calculado (FFT)
+:--------- | :------------------------: | :---:
+$1$   | $(round(abs(PB_1k_filtro),digits=4)) | $(round(abs(PB_1k_fft),digits=4))
+$21$  | $(round(abs(PB_21k_filtro),digits=4)) | $(round(abs(PB_21k_fft),digits=4))
 
 "
 
@@ -348,18 +360,6 @@ begin
 	PB_1k_fft = abs(X_saida[indice_1k_fk][])/abs(X[indice_1k_fk][])
 	PB_21k_fft =abs(X_saida[indice_21k_fk][])/abs(X[indice_21k_fk][])
 end
-
-# ╔═╡ 4f3e7be3-807e-4856-a2a8-53a80b9abd7c
-md"
-
-Tabela de ganhos calculados pela razão entre a fft na entrada e saída do sinal; e ganho da resposta em frequência do sinal.
-
-Frequência (kHz) | Ganho Teórico ($H(e^{j\omega})$) | Ganho Calculado (FFT)
-:--------- | :------------------------: | :---:
-$1$   | $(round(abs(PB_1k_filtro),digits=4)) | $(round(abs(PB_1k_fft),digits=4))
-$21$  | $(round(abs(PB_21k_filtro),digits=4)) | $(round(abs(PB_21k_fft),digits=4))
-
-"
 
 # ╔═╡ 49a1a852-8f8f-4414-a9b9-0257680a08a6
 begin
