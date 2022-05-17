@@ -11,14 +11,18 @@ begin
 	using Plots
 	using WAV
 	using FFTW
+	using SampledSignals
 	plotly()
 end
 
 # ╔═╡ 9d31b63a-ecd6-4e83-9268-24ece795133d
 begin
 	sinal, fs = wavread("antarctica.wav")
-	
+	plot(sinal)
 end
+
+# ╔═╡ fc7430c9-83b7-43ad-a63e-b644329f099a
+SampleBuf(sinal,fs)
 
 # ╔═╡ 89bea7bb-22d4-473a-9050-23c293e9dd68
 begin
@@ -96,6 +100,7 @@ end
 # ╔═╡ Cell order:
 # ╠═662faab4-c00c-11ec-0d8b-b597dda91e9a
 # ╠═9d31b63a-ecd6-4e83-9268-24ece795133d
+# ╠═fc7430c9-83b7-43ad-a63e-b644329f099a
 # ╠═89bea7bb-22d4-473a-9050-23c293e9dd68
 # ╠═30751353-0395-4590-a811-4af7da0da3e8
 # ╠═2a22f0a7-f831-46ac-8123-9e3d102bbaca
