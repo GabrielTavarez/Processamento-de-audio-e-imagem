@@ -581,6 +581,12 @@ git-tree-sha1 = "8e84a3d6fb4935d04daa7033536d15c09b8bb1f1"
 uuid = "c3e4b0f8-55cb-11ea-2926-15256bba5781"
 version = "0.14.9"
 
+[[PlutoUI]]
+deps = ["Base64", "Dates", "InteractiveUtils", "Logging", "Markdown", "Random", "Suppressor"]
+git-tree-sha1 = "45ce174d36d3931cd4e37a47f93e07d1455f038d"
+uuid = "7f904dfe-b85e-4ff6-b463-dae2292396a8"
+version = "0.7.1"
+
 [[PoissonRandom]]
 deps = ["Random", "Statistics", "Test"]
 git-tree-sha1 = "44d018211a56626288b5d3f8c6497d28c26dc850"
@@ -708,6 +714,11 @@ deps = ["Adapt", "DataAPI", "StaticArrays", "Tables"]
 git-tree-sha1 = "57617b34fa34f91d536eb265df67c2d4519b8b98"
 uuid = "09ab397b-f2b6-538f-b94a-2f83cf4a842a"
 version = "0.6.5"
+
+[[Suppressor]]
+git-tree-sha1 = "c6ed566db2fe3931292865b966d6d140b7ef32a9"
+uuid = "fd094767-a336-5f1f-9728-57cf17d0bbfb"
+version = "0.2.1"
 
 [[TOML]]
 deps = ["Dates"]
