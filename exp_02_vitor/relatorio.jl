@@ -66,6 +66,9 @@ $(@bind G_ Slider(0:0.01:0.2, default = 0.1))
 # ╔═╡ 9d653a46-9e2b-4c6f-a5da-e5352d71f124
 md"Ganho = $(G_)"
 
+# ╔═╡ b643e40e-ab39-4f1d-b3a8-a3aee4774ec0
+G_
+
 # ╔═╡ b3a12d13-1def-4b46-ae9b-ce8133a9064c
 md" #### Filtro com mais coeficientes"
 
@@ -94,10 +97,10 @@ SampleBuf(trecho, fs)
 md" ## Reconstrução do sinal completo"
 
 # ╔═╡ 90506c2e-5435-497a-8846-5c454b745f00
-plot(sinal)
-
-# ╔═╡ 4b0da572-7724-41ef-b862-c8956a7f10e6
-SampleBuf(sinal, fs)
+begin
+	plot(sinal)
+	plot!(title = "Sinal original")
+end
 
 # ╔═╡ f1f8eead-3d53-4114-b596-99d77bec2872
 md" # Functions"
@@ -182,10 +185,31 @@ begin
 end
 
 # ╔═╡ b3c1f863-c2dd-44d9-a09f-37af7f2720d8
-plot(sinal_sintese)
+begin
+	plot(sinal_sintese)
+	plot!(title = "Sinal reconstruido")
+end
 
-# ╔═╡ 86d5dbba-daa4-4a21-a658-f806901b5807
-SampleBuf(sinal_sintese, fs)
+# ╔═╡ 5b15f3bd-7de5-48dc-a7e7-a2ca49c9ed67
+begin 
+	plot(sinal, label = "Sinal original")
+	plot!(sinal_sintese, label = "Sinal reconstruido")
+	plot!(title = "Sinais sobrepostos")
+end
+
+# ╔═╡ 4b0da572-7724-41ef-b862-c8956a7f10e6
+md"
+##### Sinal Original
+$(SampleBuf(sinal, fs))
+
+##### Sinal reconstruído
+
+$(SampleBuf(sinal_sintese, fs))
+
+"
+
+# ╔═╡ efe4b6ab-1c2f-4222-a033-e56a4d17686c
+wavwrite(sinal_sintese, "sintese_LPC.wav", Fs = fs)
 
 # ╔═╡ d45b68d0-963f-4c09-a611-2d7475d912e9
 function pow2db(x)
@@ -195,7 +219,7 @@ end
 
 # ╔═╡ 545c4793-a255-457f-9a5f-80549b992de3
 begin
-	plot(ω/π*fs/2, pow2db.(G*abs.(H).^2), label = "Filtro vocal")
+	plot(ω/π*fs/2, pow2db.(G_*abs.(H).^2), label = "Filtro vocal")
 	plot!(per.freq, pow2db.(per.power*fs/π), label = "Periodograma do sinal", color = :green)
 	plot!(title="Filtro do trato vocal")
 	
@@ -220,20 +244,22 @@ end
 # ╠═89bea7bb-22d4-473a-9050-23c293e9dd68
 # ╟─9d653a46-9e2b-4c6f-a5da-e5352d71f124
 # ╟─86779651-51e3-4f48-85a3-f12665891430
+# ╠═b643e40e-ab39-4f1d-b3a8-a3aee4774ec0
 # ╠═545c4793-a255-457f-9a5f-80549b992de3
 # ╟─b3a12d13-1def-4b46-ae9b-ce8133a9064c
 # ╠═d11ad970-ba00-46f1-9744-a40709f478a5
 # ╟─c0f03a26-d2ef-459d-8143-7e454e984e5d
-# ╠═351d6990-3589-4705-978c-b3dccdf702ef
+# ╟─351d6990-3589-4705-978c-b3dccdf702ef
 # ╠═9d136466-a9b8-40e4-add4-34c28c7ded54
 # ╠═5bd05fc1-3bc4-43a0-95d7-61a6a067d9b2
 # ╠═776174d2-0974-420b-950e-151d775a0399
-# ╠═1c567043-99bf-43f5-a9ae-29b0e81e539d
+# ╟─1c567043-99bf-43f5-a9ae-29b0e81e539d
 # ╠═9ded7d0f-d68b-4b4e-8795-a33fd8940137
-# ╠═90506c2e-5435-497a-8846-5c454b745f00
-# ╠═b3c1f863-c2dd-44d9-a09f-37af7f2720d8
-# ╠═86d5dbba-daa4-4a21-a658-f806901b5807
-# ╠═4b0da572-7724-41ef-b862-c8956a7f10e6
-# ╠═f1f8eead-3d53-4114-b596-99d77bec2872
+# ╟─90506c2e-5435-497a-8846-5c454b745f00
+# ╟─b3c1f863-c2dd-44d9-a09f-37af7f2720d8
+# ╟─5b15f3bd-7de5-48dc-a7e7-a2ca49c9ed67
+# ╟─4b0da572-7724-41ef-b862-c8956a7f10e6
+# ╠═efe4b6ab-1c2f-4222-a033-e56a4d17686c
+# ╟─f1f8eead-3d53-4114-b596-99d77bec2872
 # ╠═8cd21f1d-b1c7-44ab-a726-0a0a41908a56
 # ╠═d45b68d0-963f-4c09-a611-2d7475d912e9
