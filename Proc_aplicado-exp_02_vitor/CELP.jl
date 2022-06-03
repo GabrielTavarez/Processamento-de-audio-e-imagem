@@ -20,17 +20,43 @@ using InteractiveUtils
 	include("fxfilt.jl")
 end
 
-# ╔═╡ 747c21d1-51e2-4d15-bd13-48665637b1c4
-Pkg.add("FixedPoint")
+# ╔═╡ b61539e5-72e7-430a-91d2-20599314ec01
+md" # Codificado de voz CELP
+
+Gabriel Tavares 10773801
+
+Guilherme Reis 10773700
+
+"
+
+# ╔═╡ bf5b4d85-52f1-4bd3-9b60-807d7a21fcff
+md" ## Leitura do Sinal
+"
 
 # ╔═╡ 20ff7aa3-4256-4673-9142-cbc8df19fc1d
 begin
 	sinal, fs = wavread("antarctica.wav")
 	plot(sinal)
+	plot!(title="Sinal de som")
 end
 
 # ╔═╡ 91579668-2c98-4269-ba3c-a157eec9c6b9
 SampleBuf(sinal,fs)
+
+# ╔═╡ 25e2bde5-4092-4e5a-8c6c-db62953f9e5e
+md" ## Análise e Sintese do sinal
+
+Para fazer a reconstrução do sinal iremos dividí-lo em trechos de 240 amostras andando a passos de 80 amostras. A cada trecho de 240 amoostras iremos reconstruir as 80 amostras centrais desse trecho.
+
+Em todos os trechos faremos o seguinte processo:
+
+* Fazer a análise LPC do filtro de trato vocal daquele trecho
+* Filtrar a família de funções bases por esse filtro 
+* Passar as funções base pela função FindBest que acha a melhor correspondência entre as funções e o centro do trecho
+
+Dessa forma para cada trecho teremos os coeficientes de trato vocal, os indices das melhores K funções da família de funções bases e os ganhos dessas funções.
+
+"
 
 # ╔═╡ 5ba134f1-75dc-4677-a6e3-9e0f0b1207fc
 begin
@@ -39,22 +65,17 @@ begin
 	off_set_analise = (Int)((tamanho_analise - tamanho_sintese)/2) #80 amostras pra tras e pra frente
 end
 
-# ╔═╡ a8ecb7fc-4626-41d8-8d14-aaffe14155ad
-begin
-	K = 2
-	Q = 512
-	N = tamanho_sintese
-	func_base = randn(N,Q)
-	func_filtradas = zeros(N,Q)
-	
-	zs = zeros(10)
-end
+# ╔═╡ e804c053-2059-4c01-a7b3-ef1038943eee
+md" ## Resultados
 
-# ╔═╡ ae069d6a-6148-4528-99ae-7d8058e8c073
-tamanho_analise - mod(length(sinal),tamanho_analise) + 80
+Após a análise podemos fazer a reconstrução desse sinal com os parâmetros achados em cada trecho.
+"
 
-# ╔═╡ 16771c79-3b50-40ea-b029-6f80310a0aac
-minimum(func_base)
+# ╔═╡ f019b8d7-12b4-46dd-9b63-8cdf976ce04b
+md" Podemos ver que o sinal sintetizado se assemelha bastante ao sinal original como o desejado, e o tamanho do sinal é bastante menor, pois só possui os parâmtros da sintese"
+
+# ╔═╡ ddf2261a-50e1-450f-9864-6ade9998ba41
+md" # Funções"
 
 # ╔═╡ aba080c7-314a-498d-b007-338ed8af36af
 
@@ -97,6 +118,19 @@ function find_Nbest_components(signal, codebook_vectors, N)
     return gains, indices
 end
 
+# ╔═╡ 8bb89636-dea1-4140-a3a5-598d7e3dd2a1
+noprint = md""
+
+# ╔═╡ a8ecb7fc-4626-41d8-8d14-aaffe14155ad
+begin
+	K = 2
+	Q = 512
+	N = tamanho_sintese
+	func_base = randn(N,Q)
+	func_filtradas = zeros(N,Q)
+	noprint
+end
+
 # ╔═╡ 74a87a9f-6637-410e-a931-242f09887bc0
 begin	
 	sinal_analise = vcat(zeros(off_set_analise), sinal, zeros(tamanho_analise - mod(length(sinal),tamanho_analise)), zeros(off_set_analise)) 
@@ -111,7 +145,6 @@ begin
 			
 			ak, G = lpc(trecho_analise .* hamming(tamanho_analise),10)
 
-			# aq = Fixed{Int16, 7-1}.(ak)
 			
 			subquadro = trecho_analise[off_set_analise+1:off_set_analise+tamanho_sintese]
 			
@@ -121,12 +154,8 @@ begin
 			for coluna in 1:Q
 				func_filtradas[:, coluna] = filt(filtro, func_base[: ,coluna])
 			end
-			
-			y0 = filt(filtro,zeros(tamanho_sintese))
 
-			e0 = subquadro .- y0
-			
-			ganhos, indices = find_Nbest_components(e0, func_filtradas, K);
+			ganhos, indices = find_Nbest_components(subquadro, func_filtradas, K);
 			
 			trecho_sintese = func_filtradas[:, indices[1]] * ganhos[1] + func_filtradas[:, indices[2]] * ganhos[2]
 			
@@ -142,55 +171,31 @@ end
 # ╔═╡ 8324941b-a582-4e42-992f-2ab7150d6e0c
 SampleBuf(sinal_sintese, fs)
 
+# ╔═╡ 597e71b3-de00-4582-8760-3d8e385cb3b2
+begin 
+	plot(sinal, label= "Sinal Original")
+	plot!(sinal_sintese, label ="Sinal Sintetizado", alpha = 0.7)
+	plot!(title="Comparação dos sinais")
+end
+
 # ╔═╡ 7b108c8b-9b05-4454-9340-0f4c0ccaae5d
 wavwrite(sinal_sintese, "sintese_CELP.wav", Fs = fs)
 
-# ╔═╡ a26d407d-5f31-4a44-8a1b-8fdd1b7d7219
-begin
-	ak = 0
-	i = 20
-	trecho_analise = sinal_analise[i*tamanho_sintese+1-off_set_analise:(i+1)*tamanho_sintese+off_set_analise]
-
-		if sum(trecho_analise) != 0
-
-			ak, G = lpc(trecho_analise .* hamming(tamanho_analise),10)
-
-			# aq = Fixed{Int16, 7-1}.(ak)
-
-			subquadro = trecho_analise[off_set_analise+1:off_set_analise+tamanho_sintese]
-
-
-			filtro = PolynomialRatio([1],[1;ak])
-
-			for coluna in 1:Q
-				func_filtradas[:, coluna] = filt(filtro, func_base[: ,coluna])
-			end
-
-			y0 = filt(filtro,zeros(tamanho_sintese))
-
-			e0 = subquadro .- y0
-
-			ganhos, indices = find_Nbest_components(e0, func_filtradas, K);
-
-			trecho_sintese = func_filtradas[:, indices[1]] * ganhos[1] + func_filtradas[:, indices[2]] * ganhos[2]
-
-			sinal_sintese[i*tamanho_sintese+1:(i+1)*tamanho_sintese] = trecho_sintese
-		else
-
-		end
-end
-
 # ╔═╡ Cell order:
-# ╠═03a4d57c-d709-11ec-223b-1fed26b50381
-# ╠═747c21d1-51e2-4d15-bd13-48665637b1c4
-# ╠═20ff7aa3-4256-4673-9142-cbc8df19fc1d
-# ╠═91579668-2c98-4269-ba3c-a157eec9c6b9
+# ╟─b61539e5-72e7-430a-91d2-20599314ec01
+# ╟─03a4d57c-d709-11ec-223b-1fed26b50381
+# ╟─bf5b4d85-52f1-4bd3-9b60-807d7a21fcff
+# ╟─20ff7aa3-4256-4673-9142-cbc8df19fc1d
+# ╟─91579668-2c98-4269-ba3c-a157eec9c6b9
+# ╟─25e2bde5-4092-4e5a-8c6c-db62953f9e5e
 # ╠═5ba134f1-75dc-4677-a6e3-9e0f0b1207fc
 # ╠═a8ecb7fc-4626-41d8-8d14-aaffe14155ad
 # ╠═74a87a9f-6637-410e-a931-242f09887bc0
-# ╠═ae069d6a-6148-4528-99ae-7d8058e8c073
+# ╟─e804c053-2059-4c01-a7b3-ef1038943eee
 # ╠═8324941b-a582-4e42-992f-2ab7150d6e0c
+# ╟─597e71b3-de00-4582-8760-3d8e385cb3b2
 # ╠═7b108c8b-9b05-4454-9340-0f4c0ccaae5d
-# ╠═a26d407d-5f31-4a44-8a1b-8fdd1b7d7219
-# ╠═16771c79-3b50-40ea-b029-6f80310a0aac
+# ╟─f019b8d7-12b4-46dd-9b63-8cdf976ce04b
+# ╟─ddf2261a-50e1-450f-9864-6ade9998ba41
 # ╠═aba080c7-314a-498d-b007-338ed8af36af
+# ╠═8bb89636-dea1-4140-a3a5-598d7e3dd2a1

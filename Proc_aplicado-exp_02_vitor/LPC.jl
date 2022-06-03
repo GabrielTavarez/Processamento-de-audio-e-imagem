@@ -25,6 +25,14 @@ end
 	plotly()
 end
 
+# ╔═╡ 32ec6adc-0937-41ad-b20b-b4000ab0e529
+md" # Codificado LPC
+
+Gabriel Tavares 10773801
+
+Guilherme Reis 10773700
+"
+
 # ╔═╡ 979a7ac8-8940-4ff3-9a6f-3e300c347529
 md" ## Leitura do sinal
 
@@ -35,6 +43,7 @@ md" ## Leitura do sinal
 begin
 	sinal, fs = wavread("antarctica.wav")
 	plot(sinal)
+	plot!(title="Sinal")
 end
 
 # ╔═╡ fc7430c9-83b7-43ad-a63e-b644329f099a
@@ -66,8 +75,8 @@ $(@bind G_ Slider(0:0.01:0.2, default = 0.1))
 # ╔═╡ 9d653a46-9e2b-4c6f-a5da-e5352d71f124
 md"Ganho = $(G_)"
 
-# ╔═╡ b643e40e-ab39-4f1d-b3a8-a3aee4774ec0
-G_
+# ╔═╡ be77528a-7a08-4826-b984-3832dbe6aec8
+md" Podemos ver que os sinais o filtro LPC se aproxima do peridiograma desse trechos de maneira grosseira. Ele consegue identificar os 3 picos principais."
 
 # ╔═╡ b3a12d13-1def-4b46-ae9b-ce8133a9064c
 md" #### Filtro com mais coeficientes"
@@ -87,20 +96,43 @@ begin
 	H80 = freqz(filtro80, ω)
 end
 
+# ╔═╡ 395f2ff4-bf90-4719-974b-769f8517deaa
+md"Com mais coeficientes o filtro se aproxima cada vez mais do transformada do trecho sendo capaz de identificar as odulações entre os picos principais"
+
 # ╔═╡ 351d6990-3589-4705-978c-b3dccdf702ef
 md" ### Testando estimador de Pitch"
 
 # ╔═╡ 776174d2-0974-420b-950e-151d775a0399
-SampleBuf(trecho, fs)
+md"
+Trecho reconstruido
+
+$(SampleBuf(trecho, fs))"
+
+# ╔═╡ f2e49d08-ea3e-411f-bc8b-3ca5e1b63ccb
+md"Podemos ver que o trecho reconstruido com o estimador de pitch usado se aproxima de um som de \"AH\" como o sinal do trecho original."
 
 # ╔═╡ 1c567043-99bf-43f5-a9ae-29b0e81e539d
 md" ## Reconstrução do sinal completo"
+
+# ╔═╡ 55d6b989-8055-4043-adb9-65454e18db7b
+md"Para codificar o sinal, iremos dividí-lo em trecho de 240 amostras andando a passos de 80 amostrase para cada trecho iremos fazer o procedimento a cima.
+
+* Estimar o coeficientes LPC do trecho
+* Estimar o Pitch do trecho
+* Estimar o ganho do trecho
+* Gerar um sinal de excitação a partir do Pitch
+* Filtrar esse sinal pelo filtro LPC calculado e reconstrui 80 amostras desse trecho
+
+Dessa forma, iremos reconstruir o sinal trecho a trecho"
 
 # ╔═╡ 90506c2e-5435-497a-8846-5c454b745f00
 begin
 	plot(sinal)
 	plot!(title = "Sinal original")
 end
+
+# ╔═╡ cb89e318-ffce-458b-9480-c26dff916145
+md" Como desejado, reconstruimos o sinal a ponto de ser possível identificar a frase no sinal sintetizado. A voz é bastante robótico, mas é facil identificar a frase completa"
 
 # ╔═╡ f1f8eead-3d53-4114-b596-99d77bec2872
 md" # Functions"
@@ -140,7 +172,10 @@ begin
 end
 
 # ╔═╡ 5bd05fc1-3bc4-43a0-95d7-61a6a067d9b2
-SampleBuf(filt(filtro10,pulsos), fs)
+md"
+Trecho original
+
+$(SampleBuf(filt(filtro10,pulsos), fs))"
 
 # ╔═╡ 9ded7d0f-d68b-4b4e-8795-a33fd8940137
 begin
@@ -236,29 +271,34 @@ begin
 end
 
 # ╔═╡ Cell order:
-# ╠═662faab4-c00c-11ec-0d8b-b597dda91e9a
+# ╟─32ec6adc-0937-41ad-b20b-b4000ab0e529
+# ╟─662faab4-c00c-11ec-0d8b-b597dda91e9a
 # ╟─979a7ac8-8940-4ff3-9a6f-3e300c347529
-# ╠═9d31b63a-ecd6-4e83-9268-24ece795133d
+# ╟─9d31b63a-ecd6-4e83-9268-24ece795133d
 # ╠═fc7430c9-83b7-43ad-a63e-b644329f099a
 # ╟─f3d9110c-eb91-4514-ab65-f849de960aec
 # ╠═89bea7bb-22d4-473a-9050-23c293e9dd68
 # ╟─9d653a46-9e2b-4c6f-a5da-e5352d71f124
 # ╟─86779651-51e3-4f48-85a3-f12665891430
-# ╠═b643e40e-ab39-4f1d-b3a8-a3aee4774ec0
-# ╠═545c4793-a255-457f-9a5f-80549b992de3
+# ╟─545c4793-a255-457f-9a5f-80549b992de3
+# ╟─be77528a-7a08-4826-b984-3832dbe6aec8
 # ╟─b3a12d13-1def-4b46-ae9b-ce8133a9064c
 # ╠═d11ad970-ba00-46f1-9744-a40709f478a5
 # ╟─c0f03a26-d2ef-459d-8143-7e454e984e5d
+# ╟─395f2ff4-bf90-4719-974b-769f8517deaa
 # ╟─351d6990-3589-4705-978c-b3dccdf702ef
 # ╠═9d136466-a9b8-40e4-add4-34c28c7ded54
-# ╠═5bd05fc1-3bc4-43a0-95d7-61a6a067d9b2
-# ╠═776174d2-0974-420b-950e-151d775a0399
+# ╟─5bd05fc1-3bc4-43a0-95d7-61a6a067d9b2
+# ╟─776174d2-0974-420b-950e-151d775a0399
+# ╟─f2e49d08-ea3e-411f-bc8b-3ca5e1b63ccb
 # ╟─1c567043-99bf-43f5-a9ae-29b0e81e539d
+# ╟─55d6b989-8055-4043-adb9-65454e18db7b
 # ╠═9ded7d0f-d68b-4b4e-8795-a33fd8940137
 # ╟─90506c2e-5435-497a-8846-5c454b745f00
 # ╟─b3c1f863-c2dd-44d9-a09f-37af7f2720d8
 # ╟─5b15f3bd-7de5-48dc-a7e7-a2ca49c9ed67
 # ╟─4b0da572-7724-41ef-b862-c8956a7f10e6
+# ╟─cb89e318-ffce-458b-9480-c26dff916145
 # ╠═efe4b6ab-1c2f-4222-a033-e56a4d17686c
 # ╟─f1f8eead-3d53-4114-b596-99d77bec2872
 # ╠═8cd21f1d-b1c7-44ab-a726-0a0a41908a56
