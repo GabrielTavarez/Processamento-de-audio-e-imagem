@@ -13,10 +13,14 @@ begin
 	using FFTW
 	using ImageShow
 	using Statistics
+	using ImageCore
 end
 
 # ╔═╡ c28ca588-b092-4dd5-b96b-7692ebd9a540
-Pkg.add("ImageShow")
+Pkg.add("ImageCore")
+
+# ╔═╡ 8ce62a19-cd76-495a-83ad-d27d860becd6
+
 
 # ╔═╡ 5855e0be-5416-4ed9-824a-d9ae85e4e977
 md" ## Leitura da imagem"
@@ -46,6 +50,18 @@ int_filter = [0.25 0.5 0.25 ;
 
 # ╔═╡ 483e3ae6-9f83-4017-afe2-e03bd19691c7
 md" # DCT"
+
+# ╔═╡ 036e142f-9562-4784-ab44-33837b1d0d74
+md" ## Quantização das DCTS"
+
+# ╔═╡ bc9097c6-0533-40e6-98b0-895d2bba2c80
+md" ## Reconstrução"
+
+# ╔═╡ 6eb66248-558f-4394-b507-a792e42aaa5e
+md" Abaixo temos a imagem original à esquerda e a imagem reconstruída à direita"
+
+# ╔═╡ 97462fbe-3c1e-49d5-ae6b-c264f320b6c9
+md" ## Entropia"
 
 # ╔═╡ 29f033be-9a57-40f2-9429-7a658a585cd8
 md" # Functions"
@@ -79,6 +95,23 @@ begin
 	
 	linhas_expand = linhas_original + linhas_add
 	colunas_expand = colunas_original + colunas_add
+	noprint
+end
+
+# ╔═╡ 4c8da3f3-157e-4d05-99ea-6f134261a827
+begin
+	Q = 
+	[8 11 10 16 24 40 51 61;
+	12 12 14 19 26 58 60 55;
+	14 13 16 24 40 57 69 56;
+	14 17 22 29 51 87 80 62;
+	18 22 37 56 68 109 103 77;
+	24 35 55 64 81 104 113 92;
+	49 64 78 87 103 121 120 101;
+	72 92 95 98 112 100 103 99]
+	
+	k = 3
+	
 	noprint
 end
 
@@ -184,19 +217,158 @@ begin
 	
 	Cb_sub = Cb_expand[1:2:end, 1:2:end] .- 0.5
 	Cr_sub = Cr_expand[1:2:end, 1:2:end] .- 0.5
+	
+	noprint
 end
+
+# ╔═╡ 4427dda3-8752-4fc3-8f2a-997bfbba92c1
+size(Cb_sub)
 
 # ╔═╡ b4fb610a-faaa-499d-8cb1-a0dc9b555d11
 begin
 	numx_blocos_Y =size(Y_expand)[1]÷8
 	numy_blocos_Y =size(Y_expand)[2]÷8
-	Y_dct = zeros(size(Y_expand)[1], size(Y_expand)[2])
+	Y_dct = zeros(size(Y_expand))
 	
 	for i in 1:numx_blocos_Y
 		for j in 1:numy_blocos_Y
-			bloco = Y_expand[(i-1)*8 + 1:(i)*8 + 1, (j-1)*8+1:(j)*8+1] 
+			bloco = Y_expand[(i-1)*8 + 1:(i)*8, (j-1)*8+1:(j)*8] 
+			Y_dct[(i-1)*8 + 1:(i)*8, (j-1)*8+1:(j)*8]  = dct(bloco)
 		end
 	end
+	
+	numx_blocos_Cb =size(Cb_sub)[1]÷8
+	numy_blocos_Cb =size(Cb_sub)[2]÷8
+	Cb_dct = zeros(size(Cb_sub))
+	
+	for i in 1:numx_blocos_Cb
+		for j in 1:numy_blocos_Cb
+			bloco = Cb_sub[(i-1)*8 + 1:(i)*8, (j-1)*8+1:(j)*8] 
+			Cb_dct[(i-1)*8 + 1:(i)*8, (j-1)*8+1:(j)*8]  = dct(bloco)
+		end
+	end
+	
+	numx_blocos_Cr =size(Cr_sub)[1]÷8
+	numy_blocos_Cr =size(Cr_sub)[2]÷8
+	Cr_dct = zeros(size(Cr_sub))
+	
+	for i in 1:numx_blocos_Cr
+		for j in 1:numy_blocos_Cr
+			bloco = Cr_sub[(i-1)*8 + 1:(i)*8, (j-1)*8+1:(j)*8] 
+			Cr_dct[(i-1)*8 + 1:(i)*8, (j-1)*8+1:(j)*8]  = dct(bloco)
+		end
+	end
+end
+
+# ╔═╡ aa633ca2-dbad-4081-8553-5bc51f123eac
+begin
+	#Quantização de Y
+	
+	Y_dct_q = zeros(size(Y_expand))
+	
+	for i in 1:numx_blocos_Y
+		for j in 1:numy_blocos_Y
+			bloco = Y_dct[(i-1)*8 + 1:(i)*8, (j-1)*8+1:(j)*8]*255
+			Y_dct_q[(i-1)*8 + 1:(i)*8, (j-1)*8+1:(j)*8]  = round.(bloco./(k*Q))
+		end
+	end
+	
+	Cb_dct_q = zeros(size(Cb_sub))
+	
+	for i in 1:numx_blocos_Cb
+		for j in 1:numy_blocos_Cb
+			bloco = Cb_dct[(i-1)*8 + 1:(i)*8, (j-1)*8+1:(j)*8]*255
+			Cb_dct_q[(i-1)*8 + 1:(i)*8, (j-1)*8+1:(j)*8]  = round.(bloco./(k*Q))
+		end
+	end
+	
+	Cr_dct_q = zeros(size(Cb_sub))
+	
+	for i in 1:numx_blocos_Cr
+		for j in 1:numy_blocos_Cr
+			bloco = Cr_dct[(i-1)*8 + 1:(i)*8, (j-1)*8+1:(j)*8]*255
+			Cr_dct_q[(i-1)*8 + 1:(i)*8, (j-1)*8+1:(j)*8]  = round.(bloco./(k*Q))
+		end
+	end
+	
+end
+
+# ╔═╡ 01e2e642-4406-4335-8986-6ba3ee92923b
+begin
+	# Variaveis de dados estão em :
+	Y_dct_q
+	Cb_dct_q
+	Cr_dct_q
+	
+	#Para reconstruir o sinal, precisa usar o bloco de cima
+	noprint
+end
+
+# ╔═╡ b80899fd-9fcf-4441-bd2b-f450b4742a73
+begin
+	#DCT inversa
+	
+	Y_rec_expand = zeros(size(Y_expand))
+	
+	for i in 1:numx_blocos_Y
+		for j in 1:numy_blocos_Y
+			bloco = Y_dct_q[(i-1)*8 + 1:(i)*8, (j-1)*8+1:(j)*8]
+			bloco = bloco .* (k*Q)
+			bloco = bloco./255
+			bloco = idct(bloco)
+			bloco = bloco .+ 0.5
+			Y_rec_expand[(i-1)*8 + 1:(i)*8, (j-1)*8+1:(j)*8]  .= bloco
+		end
+	end
+	
+	Cb_rec_expand = zeros(size(Cb_sub))
+	
+	for i in 1:numx_blocos_Cb
+		for j in 1:numy_blocos_Cb
+			bloco = Cb_dct_q[(i-1)*8 + 1:(i)*8, (j-1)*8+1:(j)*8]
+			bloco = bloco .* (k*Q)
+			bloco = bloco./255
+			bloco = idct(bloco)
+			bloco = bloco .+ 0.5
+			Cb_rec_expand[(i-1)*8 + 1:(i)*8, (j-1)*8+1:(j)*8]  .= bloco
+		end
+	end
+	
+	Cr_rec_expand = zeros(size(Cr_sub))
+	
+	for i in 1:numx_blocos_Cr
+		for j in 1:numy_blocos_Cr
+			bloco = Cr_dct_q[(i-1)*8 + 1:(i)*8, (j-1)*8+1:(j)*8]
+			bloco = bloco .* (k*Q)
+			bloco = bloco./255
+			bloco = idct(bloco)
+			bloco = bloco .+ 0.5
+			Cr_rec_expand[(i-1)*8 + 1:(i)*8, (j-1)*8+1:(j)*8]  .= bloco
+		end
+	end
+	
+end
+
+# ╔═╡ 420dfd0d-c5e1-4f8e-b7b0-2b20de182cba
+begin
+	#Interpolação de Cb e Cr
+	Cb_rec_int_expand = zeros(size(Cb_expand))
+	Cb_rec_int_expand[1:2:end, 1:2:end] = Cb_rec_expand
+	Cb_rec_int_expand = imfilter(Cb_rec_int_expand, int_filter)
+	
+	Cr_rec_int_expand = zeros(size(Cr_expand))
+	Cr_rec_int_expand[1:2:end, 1:2:end] = Cr_rec_expand
+	Cr_rec_int_expand = imfilter(Cr_rec_int_expand, int_filter)
+	noprint
+end
+
+# ╔═╡ 5e857a99-9f2f-470e-97e4-fc4a9f4854a4
+begin 
+	#Recuperação do tamanho original da imagem
+	Y_rec = Y_rec_expand[1:linhas_original, 1:colunas_original]
+	Cb_rec =  Cb_rec_int_expand[1:linhas_original, 1:colunas_original]
+	Cr_rec =  Cr_rec_int_expand[1:linhas_original, 1:colunas_original]
+	noprint
 	
 end
 
@@ -283,6 +455,9 @@ begin
 	imagem_reconstruida = RGB_int
 end
 
+# ╔═╡ 87a128dc-33b6-4edd-8f6f-6b5191dd8432
+hcat(imagem_original, get_RGB.(Y_rec,Cb_rec, Cr_rec))
+
 # ╔═╡ 7ea72842-901f-4093-ab3c-00ccd894e23b
 md" ## PSNR"
 
@@ -306,15 +481,29 @@ end
 
 # ╔═╡ 04eb8d3c-6da1-4d24-a99f-af85e8256c6a
 begin
-	maxi = 2^-8 -1
 	PSNR_red = MSE(red.(imagem_original), red.(imagem_reconstruida))
 	PSNR_green = MSE(green.(imagem_original), green.(imagem_reconstruida))
 	PSNR_blue = MSE(blue.(imagem_original), blue.(imagem_reconstruida))
 	PSNR_medio = mean([PSNR_red, PSNR_green, PSNR_blue])
+	noprint
 end
 
 # ╔═╡ e4a1a8c8-652b-4d85-9c7a-805457da6909
-md" PSNR médio dos 3 canais da imagem : **$(round(PSNR_medio, digits = 5))**"
+md" PSNR médio dos 3 canais da imagem reconstruída : **$(round(PSNR_medio, digits = 5))dB**"
+
+# ╔═╡ 0a051a2d-83bf-4595-9c75-5cc6a016661e
+begin
+	imagem_rec = get_RGB.(Y_rec,Cb_rec, Cr_rec)
+	
+	PSNR_red_ = MSE(red.(imagem_original), red.(imagem_rec))
+	PSNR_green_ = MSE(green.(imagem_original), green.(imagem_rec))
+	PSNR_blue_ = MSE(blue.(imagem_original), blue.(imagem_rec))
+	PSNR_medio_ = mean([PSNR_red_, PSNR_green_, PSNR_blue_])
+	noprint
+end
+
+# ╔═╡ 15359b2f-a203-491d-8aeb-b53515c907b5
+md" PSNR médio dos 3 canais da imagem reconstruída : **$(round(PSNR_medio_, digits = 5))dB**"
 
 # ╔═╡ 8440deed-d2ed-433e-bde9-73aa1acfca91
 function PSNR(imagem_exata, imagem)
@@ -328,13 +517,14 @@ end
 # ╔═╡ Cell order:
 # ╠═5cd0e390-e111-11ec-31c9-d93bec27fd1c
 # ╠═c28ca588-b092-4dd5-b96b-7692ebd9a540
+# ╠═8ce62a19-cd76-495a-83ad-d27d860becd6
 # ╟─5855e0be-5416-4ed9-824a-d9ae85e4e977
 # ╠═195e65e3-8c48-422a-8f37-8435d65b03b6
 # ╟─6b4a91cb-1a3b-4af5-9915-4e966a77dc0f
 # ╠═944839eb-9d6d-439b-8a69-4ca18eb8698a
 # ╠═3f1f0ad4-bbc9-4fc7-9ecd-d6ec324461e1
 # ╠═d41027c2-769d-4597-b203-fb6dca67037e
-# ╠═712bc6c3-8928-43cf-8ffb-16895f078d97
+# ╟─712bc6c3-8928-43cf-8ffb-16895f078d97
 # ╠═254611e5-fbac-4dfc-9433-e68b808bfa1e
 # ╠═0ccd9de5-8554-4195-af60-ea52a682087f
 # ╠═12d12111-2ce6-41b0-b337-9587c9b70307
@@ -344,7 +534,21 @@ end
 # ╠═483e3ae6-9f83-4017-afe2-e03bd19691c7
 # ╠═954f37df-a215-4c6a-897d-0e37fa88f9f4
 # ╠═39f85367-dbe5-4422-8731-d48023465c66
+# ╠═4427dda3-8752-4fc3-8f2a-997bfbba92c1
 # ╠═b4fb610a-faaa-499d-8cb1-a0dc9b555d11
+# ╠═036e142f-9562-4784-ab44-33837b1d0d74
+# ╠═4c8da3f3-157e-4d05-99ea-6f134261a827
+# ╠═aa633ca2-dbad-4081-8553-5bc51f123eac
+# ╟─bc9097c6-0533-40e6-98b0-895d2bba2c80
+# ╠═b80899fd-9fcf-4441-bd2b-f450b4742a73
+# ╠═420dfd0d-c5e1-4f8e-b7b0-2b20de182cba
+# ╠═5e857a99-9f2f-470e-97e4-fc4a9f4854a4
+# ╟─6eb66248-558f-4394-b507-a792e42aaa5e
+# ╠═87a128dc-33b6-4edd-8f6f-6b5191dd8432
+# ╠═0a051a2d-83bf-4595-9c75-5cc6a016661e
+# ╟─15359b2f-a203-491d-8aeb-b53515c907b5
+# ╠═97462fbe-3c1e-49d5-ae6b-c264f320b6c9
+# ╠═01e2e642-4406-4335-8986-6ba3ee92923b
 # ╟─29f033be-9a57-40f2-9429-7a658a585cd8
 # ╠═2fbdc13c-3ca1-4faa-8353-ba3afccd251b
 # ╠═51dce6e1-712f-4061-8f54-b6be746ee431
