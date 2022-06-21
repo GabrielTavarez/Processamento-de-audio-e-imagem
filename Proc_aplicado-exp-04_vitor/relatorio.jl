@@ -14,6 +14,8 @@ begin
 	using ImageShow
 	using Statistics
 	using ImageCore
+	using Plots
+	plotly()
 end
 
 # ╔═╡ c28ca588-b092-4dd5-b96b-7692ebd9a540
@@ -62,6 +64,12 @@ md" Abaixo temos a imagem original à esquerda e a imagem reconstruída à direi
 
 # ╔═╡ 97462fbe-3c1e-49d5-ae6b-c264f320b6c9
 md" ## Entropia"
+
+# ╔═╡ be853fe4-851d-4b12-ac90-e53b0a130ae0
+md" #### Coeficientes DC"
+
+# ╔═╡ 5d8b495c-1120-4d5f-835b-5a60a5bccfc0
+md" #### AC"
 
 # ╔═╡ 29f033be-9a57-40f2-9429-7a658a585cd8
 md" # Functions"
@@ -112,6 +120,15 @@ begin
 	
 	k = 3
 	
+	noprint
+end
+
+# ╔═╡ 94a7f969-f06e-4b53-b99d-c4cdfeea6a35
+begin
+	filt_descorrelacao = 
+	   [0.25  	0.5  	0.25
+		0.5   	1    	0.5
+		0.25 	0.5  	0.25]
 	noprint
 end
 
@@ -295,12 +312,49 @@ end
 
 # ╔═╡ 01e2e642-4406-4335-8986-6ba3ee92923b
 begin
-	# Variaveis de dados estão em :
-	Y_dct_q
-	Cb_dct_q
-	Cr_dct_q
+	Y_dct_DC = Y_dct_q[1:8:end, 1:8:end]
+	Cb_dct_DC = Cb_dct_q[1:8:end, 1:8:end]
+	Cr_dct_DC = Cr_dct_q[1:8:end, 1:8:end]
 	
-	#Para reconstruir o sinal, precisa usar o bloco de cima
+	noprint
+end
+
+# ╔═╡ de976d83-b9e6-44a7-91f3-a857c1c5a9cd
+begin
+	Y_dct_DC_desc = round.(imfilter(Y_dct_DC, filt_descorrelacao))
+	Cb_dct_DC_desc = round.(imfilter(Cb_dct_DC, filt_descorrelacao))
+	Cr_dct_DC_desc = round.(imfilter(Cr_dct_DC, filt_descorrelacao))
+	noprint
+end
+
+# ╔═╡ 4223c82b-5170-4676-a4b4-4df0554581df
+begin
+	H_DC_Y = 0
+	for k in 1: length(probabilidades_Y_DC)
+		pk = probabilidades_Y_DC[k]
+		H_DC_Y += pk!=0 ? - log2(pk) * pk : 0
+	end
+	
+	H_DC_Cb = 0
+	for k in 1: length(probabilidades_Cb_DC)
+		pk = probabilidades_Cb_DC[k]
+		H_DC_Y += pk!=0 ? - log2(pk) * pk : 0
+	end
+	
+	H_DC_Cr = 0
+	for k in 1: length(probabilidades_Cr_DC)
+		pk = probabilidades_Cr_DC[k]
+		H_DC_Y += pk!=0 ? - log2(pk) * pk : 0
+	end
+	
+end
+
+# ╔═╡ 8e44d65e-4577-4a9d-8c00-4e95cd046680
+begin
+	Y_dct_AC = Y_dct_q[1:8:end, 1:8:end]
+	Cb_dct_AC = Cb_dct_q[1:8:end, 1:8:end]
+	Cr_dct_AC = Cr_dct_q[1:8:end, 1:8:end]
+	
 	noprint
 end
 
@@ -514,6 +568,52 @@ function PSNR(imagem_exata, imagem)
 	return PSNR
 end
 
+# ╔═╡ 3fc51d8d-df5e-40ad-94a1-de6c1a5f9a83
+begin
+	probabilidades_Y_AC = zeros(2047*2 +1)
+	for i in 1:length(probabilidades_Y_DC)
+		probabilidades_Y_DC[i] = sum(Y_dct_DC_desc .== i-2047)
+	end
+	probabilidades_Y_DC = probabilidades_Y_DC./n_element(Y_dct_DC_desc)
+	
+	
+	probabilidades_Cb_DC = zeros(2047*2 +1)
+	for i in 1:length(probabilidades_Cb_DC)
+		probabilidades_Cb_DC[i] = sum(Cb_dct_DC_desc .== i-2047)
+	end
+	probabilidades_Cb_DC = probabilidades_Cb_DC./n_element(Cb_dct_DC_desc)
+	
+	probabilidades_Cr_DC = zeros(2047*2 +1)
+	for i in 1:length(probabilidades_Cr_DC)
+		probabilidades_Cr_DC[i] = sum(Cr_dct_DC_desc .== i-2047)
+	end
+	probabilidades_Cr_DC = probabilidades_Cr_DC./n_element(Cr_dct_DC_desc)
+	noprint
+end
+
+# ╔═╡ 77af673d-d4ae-4328-aa5c-557d534e84dc
+begin
+	probabilidades_Y_DC = zeros(2047*2 +1)
+	for i in 1:length(probabilidades_Y_DC)
+		probabilidades_Y_DC[i] = sum(Y_dct_DC_desc .== i-2047)
+	end
+	probabilidades_Y_DC = probabilidades_Y_DC./n_element(Y_dct_DC_desc)
+	
+	
+	probabilidades_Cb_DC = zeros(2047*2 +1)
+	for i in 1:length(probabilidades_Cb_DC)
+		probabilidades_Cb_DC[i] = sum(Cb_dct_DC_desc .== i-2047)
+	end
+	probabilidades_Cb_DC = probabilidades_Cb_DC./n_element(Cb_dct_DC_desc)
+	
+	probabilidades_Cr_DC = zeros(2047*2 +1)
+	for i in 1:length(probabilidades_Cr_DC)
+		probabilidades_Cr_DC[i] = sum(Cr_dct_DC_desc .== i-2047)
+	end
+	probabilidades_Cr_DC = probabilidades_Cr_DC./n_element(Cr_dct_DC_desc)
+	noprint
+end
+
 # ╔═╡ Cell order:
 # ╠═5cd0e390-e111-11ec-31c9-d93bec27fd1c
 # ╠═c28ca588-b092-4dd5-b96b-7692ebd9a540
@@ -548,7 +648,15 @@ end
 # ╠═0a051a2d-83bf-4595-9c75-5cc6a016661e
 # ╟─15359b2f-a203-491d-8aeb-b53515c907b5
 # ╠═97462fbe-3c1e-49d5-ae6b-c264f320b6c9
+# ╟─be853fe4-851d-4b12-ac90-e53b0a130ae0
 # ╠═01e2e642-4406-4335-8986-6ba3ee92923b
+# ╠═94a7f969-f06e-4b53-b99d-c4cdfeea6a35
+# ╠═de976d83-b9e6-44a7-91f3-a857c1c5a9cd
+# ╠═77af673d-d4ae-4328-aa5c-557d534e84dc
+# ╠═4223c82b-5170-4676-a4b4-4df0554581df
+# ╠═5d8b495c-1120-4d5f-835b-5a60a5bccfc0
+# ╠═8e44d65e-4577-4a9d-8c00-4e95cd046680
+# ╠═3fc51d8d-df5e-40ad-94a1-de6c1a5f9a83
 # ╟─29f033be-9a57-40f2-9429-7a658a585cd8
 # ╠═2fbdc13c-3ca1-4faa-8353-ba3afccd251b
 # ╠═51dce6e1-712f-4061-8f54-b6be746ee431
