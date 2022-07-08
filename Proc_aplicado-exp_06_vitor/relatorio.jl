@@ -65,8 +65,11 @@ md" ## 2 - Projeto dos coeficientes das antenas"
 # ╔═╡ 7e4fb1df-3d37-4290-b0d3-3b2f985ae234
 md" ## 3 - Decodificação"
 
-# ╔═╡ 6e695e78-b2db-4128-bdca-fe244d4667f5
-matread("mensagem.mat")["mensagem"]
+# ╔═╡ 0e0adc5c-14fe-4e76-96c2-8ab4b1372664
+md" ## 4 - Decodificação do sinal completo"
+
+# ╔═╡ 300585fb-1ec8-4f86-9669-ea23b3db04a0
+md" ## 05 - Adição de ruído ao sinal"
 
 # ╔═╡ 58b09e7c-9bd0-459e-8077-97c020758932
 md" ## Functions"
@@ -211,8 +214,9 @@ end
 
 # ╔═╡ f43b4fca-03ca-4d45-abe5-5fd899e7b059
 begin
-	# pb = digitalfilter(Lowpass(Ω; fs=fa) ,Butterworth(6))
-	pb = digitalfilter(Lowpass(Ω/fa) ,Butterworth(6))
+	fc = 2*F/fa
+	# pb = digitalfilter(Lowpass(fc) ,Butterworth(6))
+	pb = digitalfilter(Lowpass(F, fs = fa) ,Butterworth(6))
 	PB, ω = freqresp(pb)
 	noprint
 end
@@ -221,9 +225,8 @@ end
 begin
 	plot(ω, abs.(PB))
 	plot!(title= "Resposta do filtro", xlabel = "rad/amostra")
-	vline!([Ω/fa*π], label = "Freq corte")
+	vline!([fc*π], label = "Freq corte")
 end
-	
 
 # ╔═╡ b1c5dba2-8e82-4127-a917-b71c9e48ac08
 begin
@@ -258,18 +261,56 @@ end
 
 # ╔═╡ 8530f05a-9bd5-49a9-8e86-affd823221ad
 begin
-	w = DAS(θ0, M, λ/4)
+	w = DAS(θ0, M, λ/2)
 	xim = xi + j*xq
-	y = xim *w
+	y = xim * conj.(w)
 	noprint
 end
 
 # ╔═╡ 7646d2ca-dd7e-40d8-b675-7a5c3f62b9a0
 begin
+	index = 1
 	plot(real.(y), label = "Re{y}")
 	plot!(imag.(y), label = "Im{y}", alpha = 0.5)
 	plot!(title= "sinal resultado das antenas DAS")
 end
+
+# ╔═╡ 6e695e78-b2db-4128-bdca-fe244d4667f5
+begin
+	mensagem = matread("mensagem.mat")["mensagem"]
+	noprint
+end
+
+# ╔═╡ e73d9f93-bde8-4925-92da-2011759dc0f8
+begin
+	A_ruido = 30
+	x_ruido = x + A_ruido*randn(size(x))
+	
+	x̃i_ruido = zeros(size(x))
+	x̃q_ruido = zeros(size(x))
+	
+	for m in 1:M
+		x̃i_ruido[:, m] = x_ruido[:,m].*coss
+		x̃q_ruido[:, m] = x_ruido[:,m].*senn
+	end
+	
+	xi_ruido = zeros(size(x))
+	xq_ruido = zeros(size(x))
+	
+	for m in 1:M
+		xi_ruido[:, m] = filt(pb, x̃i_ruido[:,m])
+		xq_ruido[:, m] = filt(pb, x̃q_ruido[:,m])
+	end
+	
+	# w = DAS(θ0, M, λ/2)
+	xim_ruido = xi_ruido + j*xq_ruido
+	y_ruido = xim_ruido * conj.(w)
+	
+	noprint
+end
+
+# ╔═╡ f4b5fc44-ef03-4b5d-ba7c-28a1fcc5d217
+plot(real.(y_ruido))
 
 # ╔═╡ 9eb5f1da-cda4-4ae5-af60-5197215d412b
 Ω/fa*pi
@@ -320,20 +361,86 @@ end
 	
 		
 
-# ╔═╡ f3161d89-dc95-47cf-8ab2-c46496923313
-begin
-	i = 3
+# ╔═╡ ac88b1f6-7ad4-4798-855d-82725ba7119c
+function QAM(numero::Complex{})
 	
-	rea = round(Int, mean(real.(y[i*N + 1:(i+1)*N])))
-	ima = round(Int, mean(imag.(y[i*N + 1:(i+1)*N])))
-	QAM(rea, ima)
+	QAM_table = [
+		-3+3j,
+		-3+1j,
+		-3-3j,
+		-3-1j,
+		-1+3j,
+		-1+1j,
+		-1-3j,
+		-1-1j,
+		3+3j,
+		3+1j,
+		3-3j,
+		3-1j,
+		1+3j,
+		1+1j,
+		1-3j,
+		1-1j
+		]
+	
+	min_dist = Inf
+	dist = Inf
+	melhor_indice = 0
+	
+	for indice in 1:16
+		dist = abs(numero - QAM_table[indice])
+		if dist < min_dist
+			min_dist = dist
+			melhor_indice = indice-1
+		end
+		
+	end
+	
+	return melhor_indice
+	
+end
+	
+		
+
+# ╔═╡ 1230836e-2560-4514-a9b3-cd9ce599d0f7
+begin
+	num_simbolos = round(Int,size(x)[1]/N)
+	mensagem_lida = zeros(num_simbolos)
+	QAM_lido = zeros(num_simbolos,2)
+	
+	for i in 1:num_simbolos
+		QAM_lido[i,1] = round(mean(real.(y[(i-1)*N + 1 : (i)*N])))
+		QAM_lido[i,2] = round(mean(imag.(y[(i-1)*N + 1 : (i)*N])))
+		
+		mensagem_lida[i] = QAM(QAM_lido[i,1]+ j* QAM_lido[i,2]) 
+	end
+	
+	mensagem_lida
 end
 
-# ╔═╡ ee596dc8-574c-4ba3-b720-5d7aa416372c
-rea
+# ╔═╡ 4244cb05-047e-43bb-a4d2-91d6d6c0e7c7
+begin
+	scatter(QAM_lido[:,1], QAM_lido[:,2])
+	plot!(title = "Mapa complexo da mensagem lida em 16QAM")
+end
 
-# ╔═╡ 314c138a-be11-482e-91dc-273909c1f3cf
-ima
+# ╔═╡ bb3a275c-f813-45f1-8f65-3a61cb7a38b2
+begin
+	mensagem_lida_ruido = zeros(num_simbolos)
+	QAM_lido_ruido = zeros(num_simbolos,2)
+	
+	for i in 1:num_simbolos
+		QAM_lido_ruido[i,1] = round(mean(real.(y_ruido[(i-1)*N + 1 : (i)*N])))
+		QAM_lido_ruido[i,2] = round(mean(imag.(y_ruido[(i-1)*N + 1 : (i)*N])))
+		
+		mensagem_lida_ruido[i] = QAM(QAM_lido_ruido[i,1] + j*QAM_lido_ruido[i,2]) 
+	end
+	
+	mensagem_lida_ruido
+end
+
+# ╔═╡ d2cf837e-f131-447f-996b-f850132b3b10
+mensagem_lida_ruido - mensagem
 
 # ╔═╡ Cell order:
 # ╠═680e5c90-fc8e-11ec-1304-0deea9b53834
@@ -359,15 +466,20 @@ ima
 # ╠═74784532-bf4a-4d84-8bf1-3f1b279a8567
 # ╠═b1c5dba2-8e82-4127-a917-b71c9e48ac08
 # ╠═864a1b91-b216-49e3-b26d-827a53bec374
-# ╠═41ce1800-51b8-4424-a01f-2d7ebf5d2117
+# ╟─41ce1800-51b8-4424-a01f-2d7ebf5d2117
 # ╠═8530f05a-9bd5-49a9-8e86-affd823221ad
 # ╠═7646d2ca-dd7e-40d8-b675-7a5c3f62b9a0
-# ╠═7e4fb1df-3d37-4290-b0d3-3b2f985ae234
+# ╟─7e4fb1df-3d37-4290-b0d3-3b2f985ae234
 # ╠═074c5f54-13f0-45cb-81b2-a7111e476eb6
-# ╠═f3161d89-dc95-47cf-8ab2-c46496923313
-# ╠═ee596dc8-574c-4ba3-b720-5d7aa416372c
-# ╠═314c138a-be11-482e-91dc-273909c1f3cf
 # ╠═6e695e78-b2db-4128-bdca-fe244d4667f5
+# ╠═0e0adc5c-14fe-4e76-96c2-8ab4b1372664
+# ╠═1230836e-2560-4514-a9b3-cd9ce599d0f7
+# ╠═4244cb05-047e-43bb-a4d2-91d6d6c0e7c7
+# ╟─300585fb-1ec8-4f86-9669-ea23b3db04a0
+# ╠═e73d9f93-bde8-4925-92da-2011759dc0f8
+# ╠═bb3a275c-f813-45f1-8f65-3a61cb7a38b2
+# ╠═f4b5fc44-ef03-4b5d-ba7c-28a1fcc5d217
+# ╠═d2cf837e-f131-447f-996b-f850132b3b10
 # ╠═58b09e7c-9bd0-459e-8077-97c020758932
 # ╠═f41cf0d5-af4b-49ee-b9ce-917cd6e57866
 # ╠═72f16a75-fc9d-442c-be94-f443db657efa
@@ -378,3 +490,4 @@ ima
 # ╠═36ef6932-be01-4760-a104-6764d4746787
 # ╠═9eb5f1da-cda4-4ae5-af60-5197215d412b
 # ╠═b3fbd957-7764-4663-bce9-54bd6f5518c2
+# ╠═ac88b1f6-7ad4-4798-855d-82725ba7119c
