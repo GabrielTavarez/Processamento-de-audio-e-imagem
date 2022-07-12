@@ -18,12 +18,6 @@ begin
 	plotly()
 end
 
-# ╔═╡ c28ca588-b092-4dd5-b96b-7692ebd9a540
-Pkg.add("ImageCore")
-
-# ╔═╡ 8ce62a19-cd76-495a-83ad-d27d860becd6
-
-
 # ╔═╡ 5855e0be-5416-4ed9-824a-d9ae85e4e977
 md" ## Leitura da imagem"
 
@@ -214,14 +208,14 @@ begin
 	Cb = get_Cb.(imagem_original)
 	Cr = get_Cr.(imagem_original)
 	
-	Cbsub = Cb[1:2:end, 1:2:end]
-	Crsub = Cr[1:2:end, 1:2:end]
+	Cbsub = Cb[1:2:end, 1:2:end] # Subamostragem de Cb
+	Crsub = Cr[1:2:end, 1:2:end] # Subamostragem de Cr
 	noprint
 end
 
 # ╔═╡ 254611e5-fbac-4dfc-9433-e68b808bfa1e
 begin
-	tamanho_original_imagem = n_element(imagem_original)
+	tamanho_original_imagem = n_element(imagem_original) * 3
 	tamanho_int = n_element(Y) + n_element(Cbsub) + n_element(Crsub)
 	compresao_int = tamanho_int/tamanho_original_imagem
 end
@@ -237,9 +231,6 @@ begin
 	
 	noprint
 end
-
-# ╔═╡ 4427dda3-8752-4fc3-8f2a-997bfbba92c1
-size(Cb_sub)
 
 # ╔═╡ b4fb610a-faaa-499d-8cb1-a0dc9b555d11
 begin
@@ -327,6 +318,29 @@ begin
 	noprint
 end
 
+# ╔═╡ 77af673d-d4ae-4328-aa5c-557d534e84dc
+begin
+	probabilidades_Y_DC = zeros(2047*2 +1)
+	for i in 1:length(probabilidades_Y_DC)
+		probabilidades_Y_DC[i] = sum(Y_dct_DC_desc .== i-2047)
+	end
+	probabilidades_Y_DC = probabilidades_Y_DC./n_element(Y_dct_DC_desc)
+	
+	
+	probabilidades_Cb_DC = zeros(2047*2 +1)
+	for i in 1:length(probabilidades_Cb_DC)
+		probabilidades_Cb_DC[i] = sum(Cb_dct_DC_desc .== i-2047)
+	end
+	probabilidades_Cb_DC = probabilidades_Cb_DC./n_element(Cb_dct_DC_desc)
+	
+	probabilidades_Cr_DC = zeros(2047*2 +1)
+	for i in 1:length(probabilidades_Cr_DC)
+		probabilidades_Cr_DC[i] = sum(Cr_dct_DC_desc .== i-2047)
+	end
+	probabilidades_Cr_DC = probabilidades_Cr_DC./n_element(Cr_dct_DC_desc)
+	noprint
+end
+
 # ╔═╡ 4223c82b-5170-4676-a4b4-4df0554581df
 begin
 	H_DC_Y = 0
@@ -347,6 +361,29 @@ begin
 		H_DC_Y += pk!=0 ? - log2(pk) * pk : 0
 	end
 	
+end
+
+# ╔═╡ 3fc51d8d-df5e-40ad-94a1-de6c1a5f9a83
+begin
+	probabilidades_Y_AC = zeros(2047*2 +1)
+	for i in 1:length(probabilidades_Y_DC)
+		probabilidades_Y_DC[i] = sum(Y_dct_DC_desc .== i-2047)
+	end
+# 	probabilidades_Y_DC = probabilidades_Y_DC./n_element(Y_dct_DC_desc)
+	
+	
+# 	probabilidades_Cb_DC = zeros(2047*2 +1)
+# 	for i in 1:length(probabilidades_Cb_DC)
+# 		probabilidades_Cb_DC[i] = sum(Cb_dct_DC_desc .== i-2047)
+# 	end
+# 	probabilidades_Cb_DC = probabilidades_Cb_DC./n_element(Cb_dct_DC_desc)
+	
+# 	probabilidades_Cr_DC = zeros(2047*2 +1)
+# 	for i in 1:length(probabilidades_Cr_DC)
+# 		probabilidades_Cr_DC[i] = sum(Cr_dct_DC_desc .== i-2047)
+# 	end
+# 	probabilidades_Cr_DC = probabilidades_Cr_DC./n_element(Cr_dct_DC_desc)
+	noprint
 end
 
 # ╔═╡ 8e44d65e-4577-4a9d-8c00-4e95cd046680
@@ -568,56 +605,8 @@ function PSNR(imagem_exata, imagem)
 	return PSNR
 end
 
-# ╔═╡ 3fc51d8d-df5e-40ad-94a1-de6c1a5f9a83
-begin
-	probabilidades_Y_AC = zeros(2047*2 +1)
-	for i in 1:length(probabilidades_Y_DC)
-		probabilidades_Y_DC[i] = sum(Y_dct_DC_desc .== i-2047)
-	end
-	probabilidades_Y_DC = probabilidades_Y_DC./n_element(Y_dct_DC_desc)
-	
-	
-	probabilidades_Cb_DC = zeros(2047*2 +1)
-	for i in 1:length(probabilidades_Cb_DC)
-		probabilidades_Cb_DC[i] = sum(Cb_dct_DC_desc .== i-2047)
-	end
-	probabilidades_Cb_DC = probabilidades_Cb_DC./n_element(Cb_dct_DC_desc)
-	
-	probabilidades_Cr_DC = zeros(2047*2 +1)
-	for i in 1:length(probabilidades_Cr_DC)
-		probabilidades_Cr_DC[i] = sum(Cr_dct_DC_desc .== i-2047)
-	end
-	probabilidades_Cr_DC = probabilidades_Cr_DC./n_element(Cr_dct_DC_desc)
-	noprint
-end
-
-# ╔═╡ 77af673d-d4ae-4328-aa5c-557d534e84dc
-begin
-	probabilidades_Y_DC = zeros(2047*2 +1)
-	for i in 1:length(probabilidades_Y_DC)
-		probabilidades_Y_DC[i] = sum(Y_dct_DC_desc .== i-2047)
-	end
-	probabilidades_Y_DC = probabilidades_Y_DC./n_element(Y_dct_DC_desc)
-	
-	
-	probabilidades_Cb_DC = zeros(2047*2 +1)
-	for i in 1:length(probabilidades_Cb_DC)
-		probabilidades_Cb_DC[i] = sum(Cb_dct_DC_desc .== i-2047)
-	end
-	probabilidades_Cb_DC = probabilidades_Cb_DC./n_element(Cb_dct_DC_desc)
-	
-	probabilidades_Cr_DC = zeros(2047*2 +1)
-	for i in 1:length(probabilidades_Cr_DC)
-		probabilidades_Cr_DC[i] = sum(Cr_dct_DC_desc .== i-2047)
-	end
-	probabilidades_Cr_DC = probabilidades_Cr_DC./n_element(Cr_dct_DC_desc)
-	noprint
-end
-
 # ╔═╡ Cell order:
 # ╠═5cd0e390-e111-11ec-31c9-d93bec27fd1c
-# ╠═c28ca588-b092-4dd5-b96b-7692ebd9a540
-# ╠═8ce62a19-cd76-495a-83ad-d27d860becd6
 # ╟─5855e0be-5416-4ed9-824a-d9ae85e4e977
 # ╠═195e65e3-8c48-422a-8f37-8435d65b03b6
 # ╟─6b4a91cb-1a3b-4af5-9915-4e966a77dc0f
@@ -634,7 +623,6 @@ end
 # ╠═483e3ae6-9f83-4017-afe2-e03bd19691c7
 # ╠═954f37df-a215-4c6a-897d-0e37fa88f9f4
 # ╠═39f85367-dbe5-4422-8731-d48023465c66
-# ╠═4427dda3-8752-4fc3-8f2a-997bfbba92c1
 # ╠═b4fb610a-faaa-499d-8cb1-a0dc9b555d11
 # ╠═036e142f-9562-4784-ab44-33837b1d0d74
 # ╠═4c8da3f3-157e-4d05-99ea-6f134261a827
