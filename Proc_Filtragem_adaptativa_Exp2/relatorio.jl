@@ -9,6 +9,7 @@ begin
 	using DSP
 	using Plots
 	using Distributions
+	using Statistics
 	using LaTeXStrings
 	using LinearAlgebra
 	plotly()
@@ -29,9 +30,6 @@ md" ## 1 - Parâmetros de simulações"
 md" ## Simulação de LMS
 Nesse exemplo usaremos **μ = 0.05** para podermos ver as curvas de aprendizado, mas como o problema é bastante simples, o algoritmo convergiria com um valor de passo maior como 0.5 ou 1.0
 "
-
-# ╔═╡ 8525e218-5ca3-4847-8292-b509e420a140
-
 
 # ╔═╡ 928f8765-0a45-4bfe-9f3c-87ff3b19b03e
 md" ## Matriz de autocorrelação
@@ -97,17 +95,12 @@ R =
 
 "
 
-# ╔═╡ 159684a1-9f92-4ee2-99ec-d4017618a77a
-
-
 # ╔═╡ 6d0ae57a-d1fe-42d4-8d44-4316c184f817
 md" ## Taxa de convergência"
 
 # ╔═╡ 0cb42859-d570-4d76-a74e-5c2161ce20e6
-md" ## Mudança de valor de freqûencia de x
-
-
-Agora usaremos ω₀ = 0.1π"
+md" ## Mudança da freqûencia de x -> ω₀ = 0.1π
+"
 
 # ╔═╡ 3cf8b911-336b-43f2-b1dc-6bb858f8e1e8
 md" ### Matriz de autocorrelação para ω = 0.1π"
@@ -129,6 +122,96 @@ R =
 	\end{array}
 \right]$$ 
 "
+
+# ╔═╡ ed040251-21d8-4178-94dc-de6db205b39d
+md" ## Aproximação do valor esperado de Δw
+
+Nessa seção iremos calcular os valores valores esperados de Δw usando o método experimental e teórico. No método experimental, iremos fazer a média de centenas de realizações do experimento, e no método teórico, iremos aplicar a definição do favlor esperado de Δw.
+"
+
+# ╔═╡ 8c79c761-6d30-42ff-a898-a03584de83ee
+md" A curva teórica de Δw é definida por
+
+$$E\{w[n]\} = (I -\mu R_{\phi})w[n-1]$$
+
+Portanto iremos calcular essa curva seguindo essa relação
+"
+
+# ╔═╡ 33a2cbb8-ba4d-4162-9630-2ab6eb1fb376
+md" Vemos que como esperado, as curvas teóricas e experimentais são similares.
+"
+
+# ╔═╡ 5df8690f-d1bd-46df-943d-a263032efb71
+md" ## Sinais aletórios"
+
+# ╔═╡ 70c5e346-a66c-465c-9be1-c05518d73652
+md" ### Resultados do LMS"
+
+# ╔═╡ 36104c1a-7ae5-4a7e-ab75-091a5df5e68e
+md" ## Matriz de autocorrelação
+
+$$
+R =
+\left[
+	\begin{array}{cc} 
+		E\{\Phi_0²\} & E\{\Phi_0 \Phi_1 \}\\
+		E\{\Phi_0 \Phi_1 \} & E\{\Phi_1²\}
+	\end{array}
+\right]$$ 
+
+Temos 
+
+$$
+	E\{\Phi_0²\}  = 
+	E\{x[n]^2\} = 
+	E\{wgn[n]^2\} = \sigma ^2
+.$$ 
+
+$$
+	E\{\Phi_1²\}  = 
+	E\{x[n-1]²\} = 
+	E\{x[n]²\} =  
+	\sigma^2
+.$$ 
+
+$$
+	E\{\Phi_0 \Phi_1 \}  = 
+	E\{x[n] \cdot x[n-1]\} = 
+	E\{wgn[n] \cdot wgn[n-1]\} = 0   
+.$$
+
+
+$$
+R =
+\left[
+	\begin{array}{cc} 
+		\sigma^2 & 0\\
+		0 & \sigma^2
+	\end{array}
+\right] =
+\left[
+	\begin{array}{cc} 
+		1 & 0\\
+		0 & 1
+	\end{array}
+\right]$$ 
+
+"
+
+# ╔═╡ 17abfdfc-54cd-4dd6-a7e7-3bc709ab4581
+md" **Multiplas realizações**"
+
+# ╔═╡ 8bd93259-bf82-42ad-8434-c727ec9aa508
+md" ### Potência mínima do erro
+
+
+Após a convergência desejamos que o sinal **e[n]** seja igual ao sinal **v[n]**. Para verificar isso, iremos checar se após a convergência, o sinal de saída possui a mesma potência que o sinal v[n].
+
+Iremos verificar a taxa teórica e a experimental obtidas.
+"
+
+# ╔═╡ 98aa5c2d-a238-42ac-81dc-3c34bd85eee1
+
 
 # ╔═╡ 5e6f341c-71db-4c4d-8b4a-b5de5c70329b
 md" # Function"
@@ -195,14 +278,12 @@ end
 
 # ╔═╡ c86c269f-5240-4d8d-ae95-684d5d84e39e
 begin
-	w, erro = LMS(x, d, M, 0.05)
+	μ = 0.05
+	w, erro = LMS(x, d, M, μ)
 	Δw0 = h[1] .- w[:, 1]
 	Δw1 = h[2] .- w[:, 2]
 	noprint
 end
-
-# ╔═╡ 0a438982-c8ee-40d4-88e8-0708a8da3da3
-(Δw1[10] - Δw1[1])/10
 
 # ╔═╡ bb7cc248-2b93-420b-87ff-5e8453f45032
 begin
@@ -245,6 +326,20 @@ begin
 	noprint
 end
 
+# ╔═╡ a995195d-7cff-4128-9389-168662dd8fc6
+begin
+	# método teórico
+	E_Δw0 = zeros(N)
+	E_Δw0[1] = h[1]
+	
+	E_Δw1 = zeros(N)
+	E_Δw1[1] = h[2]
+	for n in 2:N
+		E_Δw0[n] = (1 - μ*R[1,1])*(E_Δw0[n-1])
+		E_Δw1[n] = (1 - μ*R[2,2])*(E_Δw1[n-1])
+	end
+end
+
 # ╔═╡ bcb204cd-1f73-4e17-9184-c7c402ba7e1c
 begin
 	R2 = [1/2 cos(ω0_2)/2;
@@ -259,20 +354,149 @@ md" ### Taxa de convergência
 Os valores teórico e experimental são calculados da mesma forma e temos
 
 
-**taxa = $(round(log(1-0.1*minimum(λ2)), digits = 5))**
+**taxa máxima = $(round(log(1-0.1*minimum(λ2)), digits = 5))**
 
-**taxa = $(round(log(1-0.1*maximum(λ2)), digits = 5))**
+**taxa mínima = $(round(log(1-0.1*maximum(λ2)), digits = 5))**
 
-**taxa = $(round( (log(Δw0_2[10]) - log(Δw0_2[1]))/9 , digits = 5))**
+É bastante dificil identificar o intervalo que o circuito converge à taxa máxima, pois ele é bem curto. No entanto é facil identificar o intevalo que o sistema converge à taxa mínima, e nesse intervalo podemos verificar a taxa de convergência experimental
+
+**taxa experimental = $(round( (log(Δw0_2[300]) - log(Δw0_2[400]))/100 , digits = 5))**
 
 
 "
 
-# ╔═╡ 65c105b6-4ee2-4605-854e-b8a9770c7b0c
-λ2
+# ╔═╡ 2874e01c-f3aa-483b-a8b1-f3509fd29db1
+begin
+	# método experimental
+	num_interacoes = 1000
+	Δw0_3 = Δw1_3 = zeros(N)
+	for i in 1:num_interacoes
+		Θ_3 = rand(1)*2π # fase de x 
+		Ψ_3 = rand(1)*2π # fase de v
+	
+		x_3 =  cos.(ω0*n .+ Θ_3)
+		v_3 = A*cos.(ω1*n .+ Ψ_3)
+		
+		d_3 = v_3 + filt(h, x_3)
+		
+		w_3, erro_3 = LMS(x_3, d_3, M, μ)
+		Δw0_3 += h[1] .- w_3[:, 1]
+		Δw1_3 += h[2] .- w_3[:, 2]
+	end
+	Δw0_3 = Δw0_3/num_interacoes
+	Δw1_3 = Δw1_3/num_interacoes
+	noprint
+end
 
-# ╔═╡ ed040251-21d8-4178-94dc-de6db205b39d
-maximum(λ2)
+# ╔═╡ 1c1a9dcf-102d-4c40-a938-aea3d8fc7374
+begin
+	plot(title = "Convergência dos coeficientes do filtro")
+	plot!(Δw0, color = RGB(1,0,0), width = 8, label = "Δw0")
+	plot!(Δw0_3, color = RGB(0,1,0), width = 5, label = "experimental E{Δw0}")
+	plot!(E_Δw0, color = RGB(0,0,1), width = 2, label = "teórcio E{Δw0}")
+
+	plot!(Δw1, color = RGB(1,0.5,0), width = 8, label = "Δw1")
+	plot!(Δw1_3, color = RGB(0,1,1), width = 5, label = "experimental E{Δw1}")
+	plot!(E_Δw1, color = RGB(1,0,1), width = 2, label = "teórcio E{Δw1}")
+
+	plot!(legend=(0.7,0.8))
+	
+	
+
+end
+
+# ╔═╡ a8dea66d-fb75-41c7-b178-5de6aafb9444
+begin
+	σ²_x = 1
+	x_4 = randn(N)*σ²_x
+	σ²_v = 0.01
+	v_4 = randn(N)*σ²_v
+
+
+	d_4 = v_4 + filt(h, x_4)
+	
+	w_4, erro_4 = LMS(x_4, d_4, M, μ)
+	Δw0_4 = h[1] .- w_4[:, 1]
+	Δw1_4 = h[2] .- w_4[:, 2]
+	noprint
+end
+
+# ╔═╡ a90f7c7b-7923-4d42-a6f0-77423855b815
+begin
+	plot(title = "Erro")
+	plot!(erro_4)
+end
+
+# ╔═╡ 92a94f35-6fcd-4ad6-93cb-ec7984c97361
+begin
+	plot(title = "Convergência dos coeficientes")
+
+	# plot!(Δw0_4, label = "Δw0")
+	# plot!(Δw1_4, label = "Δw1")
+
+	plot!(log.(abs.(Δw0_4)), label = "log(Δw0)")
+	plot!(log.(abs.(Δw1_4)), label = "log(Δw1)")
+	
+	
+end
+
+# ╔═╡ 6bc9a6e1-59c3-4016-a93e-5ae39a358124
+md" ## Taxa de convergência
+
+
+$$log(1-\mu \lambda_{max}) = log(1-\mu \sigma ^2)$$
+
+**Taxa teórica**: $(round(log(1-μ*σ²_x), digits = 5))
+
+
+Taxa experimental será realizada vendo a derivada da curva logarítimica
+
+**Taxa experimental 1 realização** : $(round((log(abs(Δw0_4[71])) - log(abs(Δw0_4[1])))/70, digits=5)) 
+
+Por se tratar de um ruído, o valor apresenta um certo erro. Se realizarmos várias interações e calcularmos a média dessas realizações, o valor chega muito mais perto do esperado.
+"
+
+# ╔═╡ 8bda410c-722e-411c-9926-f9d70170d89e
+begin
+	#taxa experimental
+	var(erro_4[1:end])
+	#por que ta errado??
+	
+end
+
+# ╔═╡ e26ba1e0-2a96-4f6e-a3f4-ed7129761c04
+begin
+	#teórica
+	μ*σ²_v * 2*σ²_x/2
+	#por que ta errado??
+end
+
+# ╔═╡ 5ba8c2fb-a736-4bc6-82cf-4d11adb779e1
+begin
+	Δw0_5 = zeros(N)
+	Δw1_5 = zeros(N)	
+	for i in 1:1000
+		x_5 = randn(N)*σ²_x
+		v_5 = randn(N)*σ²_v
+		
+		d_5 = v_5 + filt(h, x_5)
+		
+		w_5, erro_5 = LMS(x_5, d_5, M, μ)
+		Δw0_5 += h[1] .- w_5[:, 1]
+		Δw1_5 += h[2] .- w_5[:, 2]
+	end
+	Δw0_5 = Δw0_5/1000
+	Δw1_5 = Δw1_5/1000
+ 	noprint
+
+end
+
+# ╔═╡ b7f30e87-5b29-4b87-ae76-72a1ed24e634
+md" **Taxa de múltiplas realizações** : $(round((log(abs(Δw0_5[71])) - log(abs(Δw0_5[1])))/70, digits=5)) 
+
+
+Vemos que ela é muito mais próxima do valor teórico.
+"
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
@@ -282,6 +506,7 @@ Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
 LaTeXStrings = "b964fa9f-0449-5b57-a5c2-d3ea65f4040f"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
+Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 
 [compat]
 DSP = "~0.7.7"
@@ -294,9 +519,9 @@ Plots = "~1.33.0"
 PLUTO_MANIFEST_TOML_CONTENTS = """
 # This file is machine-generated - editing it directly is not advised
 
-julia_version = "1.8.1"
+julia_version = "1.8.2"
 manifest_format = "2.0"
-project_hash = "f2c460fc8ed343604b6ccbb7887a76f35b66991a"
+project_hash = "a192509f2f730e7fdecc0f3abae439e2dc952b8c"
 
 [[deps.AbstractFFTs]]
 deps = ["ChainRulesCore", "LinearAlgebra"]
@@ -457,10 +682,10 @@ uuid = "c87230d0-a227-11e9-1b43-d7ebe4e7570a"
 version = "0.4.1"
 
 [[deps.FFMPEG_jll]]
-deps = ["Artifacts", "Bzip2_jll", "FreeType2_jll", "FriBidi_jll", "JLLWrappers", "LAME_jll", "Libdl", "Ogg_jll", "OpenSSL_jll", "Opus_jll", "Pkg", "Zlib_jll", "libaom_jll", "libass_jll", "libfdk_aac_jll", "libvorbis_jll", "x264_jll", "x265_jll"]
-git-tree-sha1 = "ccd479984c7838684b3ac204b716c89955c76623"
+deps = ["Artifacts", "Bzip2_jll", "FreeType2_jll", "FriBidi_jll", "JLLWrappers", "LAME_jll", "Libdl", "Ogg_jll", "OpenSSL_jll", "Opus_jll", "PCRE2_jll", "Pkg", "Zlib_jll", "libaom_jll", "libass_jll", "libfdk_aac_jll", "libvorbis_jll", "x264_jll", "x265_jll"]
+git-tree-sha1 = "74faea50c1d007c85837327f6775bea60b5492dd"
 uuid = "b22a6f82-2f65-5046-a5b2-351ab43fb4e5"
-version = "4.4.2+0"
+version = "4.4.2+2"
 
 [[deps.FFTW]]
 deps = ["AbstractFFTs", "FFTW_jll", "LinearAlgebra", "MKL_jll", "Preferences", "Reexport"]
@@ -837,6 +1062,11 @@ git-tree-sha1 = "85f8e6578bf1f9ee0d11e7bb1b1456435479d47c"
 uuid = "bac558e1-5e72-5ebc-8fee-abe8a469f55d"
 version = "1.4.1"
 
+[[deps.PCRE2_jll]]
+deps = ["Artifacts", "Libdl"]
+uuid = "efcefdf7-47ab-520b-bdef-62a2eaa19f15"
+version = "10.40.0+0"
+
 [[deps.PCRE_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
 git-tree-sha1 = "b2a7af664e098055a7529ad1a900ded962bca488"
@@ -1042,7 +1272,7 @@ version = "1.0.0"
 [[deps.Tar]]
 deps = ["ArgTools", "SHA"]
 uuid = "a4e569a6-e804-4fa4-b0f3-eef7a1d5b13e"
-version = "1.10.0"
+version = "1.10.1"
 
 [[deps.TensorCore]]
 deps = ["LinearAlgebra"]
@@ -1309,30 +1539,45 @@ version = "1.4.1+0"
 """
 
 # ╔═╡ Cell order:
-# ╠═54c98e78-39e4-11ed-3175-19d4352008c9
+# ╟─54c98e78-39e4-11ed-3175-19d4352008c9
 # ╠═eb3fb8e6-d2e8-4a4f-b569-78d190ebc148
 # ╠═7c2a3afe-7f20-4b23-b03c-5fffb4768ae2
 # ╠═010c8662-6b50-4dc8-a7f7-7c6e766fc009
 # ╟─dca632ab-ac2d-4a62-919a-554fe5ae5235
 # ╠═c86c269f-5240-4d8d-ae95-684d5d84e39e
-# ╠═0a438982-c8ee-40d4-88e8-0708a8da3da3
 # ╟─bb7cc248-2b93-420b-87ff-5e8453f45032
 # ╟─398b49af-017e-40d8-b0cd-5b630ad8a175
-# ╠═8525e218-5ca3-4847-8292-b509e420a140
-# ╟─928f8765-0a45-4bfe-9f3c-87ff3b19b03e
+# ╠═928f8765-0a45-4bfe-9f3c-87ff3b19b03e
 # ╠═cb003454-c322-48a5-bd1d-39d31e93e75a
-# ╠═159684a1-9f92-4ee2-99ec-d4017618a77a
 # ╟─6d0ae57a-d1fe-42d4-8d44-4316c184f817
-# ╠═5fa5f019-3174-4c9d-a1ba-2872ad95b379
+# ╟─5fa5f019-3174-4c9d-a1ba-2872ad95b379
 # ╟─0cb42859-d570-4d76-a74e-5c2161ce20e6
 # ╠═c09966fa-9f72-4029-bb40-30bf7e5eeed2
 # ╠═f00708cd-1d0e-452f-b0a3-01a3998243a1
 # ╟─3cf8b911-336b-43f2-b1dc-6bb858f8e1e8
 # ╟─da9a37a3-1851-49e9-bcd5-aafba76c05c8
 # ╠═bcb204cd-1f73-4e17-9184-c7c402ba7e1c
-# ╠═3bce3d53-1996-4c80-98d5-1eeb61b393fc
-# ╠═65c105b6-4ee2-4605-854e-b8a9770c7b0c
-# ╠═ed040251-21d8-4178-94dc-de6db205b39d
+# ╟─3bce3d53-1996-4c80-98d5-1eeb61b393fc
+# ╟─ed040251-21d8-4178-94dc-de6db205b39d
+# ╠═2874e01c-f3aa-483b-a8b1-f3509fd29db1
+# ╟─8c79c761-6d30-42ff-a898-a03584de83ee
+# ╠═a995195d-7cff-4128-9389-168662dd8fc6
+# ╟─1c1a9dcf-102d-4c40-a938-aea3d8fc7374
+# ╟─33a2cbb8-ba4d-4162-9630-2ab6eb1fb376
+# ╟─5df8690f-d1bd-46df-943d-a263032efb71
+# ╠═a8dea66d-fb75-41c7-b178-5de6aafb9444
+# ╟─70c5e346-a66c-465c-9be1-c05518d73652
+# ╟─a90f7c7b-7923-4d42-a6f0-77423855b815
+# ╟─92a94f35-6fcd-4ad6-93cb-ec7984c97361
+# ╟─36104c1a-7ae5-4a7e-ab75-091a5df5e68e
+# ╟─6bc9a6e1-59c3-4016-a93e-5ae39a358124
+# ╟─17abfdfc-54cd-4dd6-a7e7-3bc709ab4581
+# ╠═5ba8c2fb-a736-4bc6-82cf-4d11adb779e1
+# ╟─b7f30e87-5b29-4b87-ae76-72a1ed24e634
+# ╟─8bd93259-bf82-42ad-8434-c727ec9aa508
+# ╠═8bda410c-722e-411c-9926-f9d70170d89e
+# ╠═e26ba1e0-2a96-4f6e-a3f4-ed7129761c04
+# ╠═98aa5c2d-a238-42ac-81dc-3c34bd85eee1
 # ╟─5e6f341c-71db-4c4d-8b4a-b5de5c70329b
 # ╠═f19781d4-e996-4106-975e-1443b10fd489
 # ╠═e6197eb5-7f79-4957-8b4a-2c7e7b4f75dd
